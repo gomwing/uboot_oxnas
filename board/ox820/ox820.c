@@ -11,7 +11,6 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-
 #ifdef CONFIG_SPL_BUILD
 
 #ifdef DEBUG
@@ -233,7 +232,6 @@ void nand_dev_reset(struct nand_chip *chip)
 
 int board_nand_init(struct nand_chip *chip)
 {
-
 	/* Block reset Static core */
 	reset_block(SYS_CTRL_RST_STATIC, 1);
 	reset_block(SYS_CTRL_RST_STATIC, 0);
@@ -328,91 +326,3 @@ int board_eth_init(bd_t *bis)
 	return designware_initialize(0, MAC_BASE, 0, PHY_INTERFACE_MODE_RGMII);
 }
 
-#define GREEN_LED	0
-#define ORANGE_LED	1
-#define BOTH_LEDS	2
-#define NEITHER_LED	3
-/*  BLUE does not seem to work (pinmux_set(PINMUX_BANK_MFA, 2, 1); */
-
-static void set_leds(int leds, int blink_count, int blink_delay_msec)
-{
-        int i;
-
-        switch (leds) {
-        case GREEN_LED:
-                pinmux_set(PINMUX_BANK_MFB, 17, 1); /* green  ON  */
-		for (i =0; i < blink_count; i++) {
-	                pinmux_set(PINMUX_BANK_MFB, 17, 0); /* green  OFF  */
-			mdelay(blink_delay_msec);
-	                pinmux_set(PINMUX_BANK_MFB, 17, 1); /* green  ON  */
-			mdelay(blink_delay_msec);
-		}
-                break;
-
-        case ORANGE_LED:
-                pinmux_set(PINMUX_BANK_MFB, 16, 1); /* orange ON  */
-                for (i =0; i < blink_count; i++) {
-                	pinmux_set(PINMUX_BANK_MFB, 16, 0); /* orange OFF  */
-			mdelay(blink_delay_msec);
-			pinmux_set(PINMUX_BANK_MFB, 16, 1); /* orange ON  */
-			mdelay(blink_delay_msec);
-		}
-                break;
-
-        case BOTH_LEDS:
-                pinmux_set(PINMUX_BANK_MFB, 16, 1); /* orange ON  */
-                pinmux_set(PINMUX_BANK_MFB, 17, 1); /* green  ON  */
-		for (i =0; i < blink_count; i++) {
-                        pinmux_set(PINMUX_BANK_MFB, 16, 0); /* orange OFF  */
-	                pinmux_set(PINMUX_BANK_MFB, 17, 0); /* green  OFF  */
-                        mdelay(blink_delay_msec);
-                        pinmux_set(PINMUX_BANK_MFB, 16, 1); /* orange ON  */
-	                pinmux_set(PINMUX_BANK_MFB, 17, 1); /* green  ON  */
-			mdelay(blink_delay_msec);
-                }
-                break;
-       case NEITHER_LED:
-                pinmux_set(PINMUX_BANK_MFB, 16, 0); /* orange OFF  */
-                pinmux_set(PINMUX_BANK_MFB, 17, 0); /* green  OFF  */
-                break;
-        default:
-		break;
-	}
-}
-
-
-void show_boot_progress(int val) {
-
-	switch (val) {
-	case BOOTSTAGE_ID_MAIN_LOOP:
-	        puts("Main Loop\n" );
-		set_leds(NEITHER_LED, 0, 0);
-		set_leds(GREEN_LED, 3, 100);
-		break;
-
-	case BOOTSTAGE_ID_NET_ETH_START:
-		puts ("\nLed:	GREEN\n");
-		set_leds(NEITHER_LED, 0, 0);
-		set_leds(GREEN_LED, 3, 100);
-		break;
-
-	case BOOTSTAGE_ID_RUN_OS:
-		puts ("\nLed:	GREEN\n");
-		set_leds(NEITHER_LED, 0, 0);
-                set_leds(GREEN_LED, 3, 100);
- 		break;
-	default:
-		if (val < 0)	/* error */ {
-			puts ("\nLed:	ORANGE (Failed)\n");
-			set_leds(NEITHER_LED, 0, 0);
-	                set_leds(ORANGE_LED, 6, 500);
-		}
-		else {
-			/* blink for all other boot activities */
-			set_leds(NEITHER_LED, 0, 0);
-	                set_leds(GREEN_LED, 3, 100);			
-		}
-		break;
-	}
-	
-}

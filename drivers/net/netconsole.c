@@ -17,11 +17,11 @@ DECLARE_GLOBAL_DATA_PTR;
 #endif
 
 static char input_buffer[CONFIG_NETCONSOLE_BUFFER_SIZE];
-static int input_size = 0; /* char count in input buffer */
-static int input_offset = 0; /* offset to valid chars in input buffer */
+static int input_size; /* char count in input buffer */
+static int input_offset; /* offset to valid chars in input buffer */
 static int input_recursion;
 static int output_recursion;
-static int net_timeout = 50;
+static int net_timeout;
 static uchar nc_ether[6]; /* server enet address */
 static IPaddr_t nc_ip; /* server ip */
 static short nc_out_port; /* target output port */
@@ -184,9 +184,7 @@ static void nc_send_packet(const char *buf, int len)
 			return;	/* inside net loop */
 		output_packet = buf;
 		output_packet_len = len;
-		input_recursion = 1;
 		NetLoop(NETCONS); /* wait for arp reply and send packet */
-		input_recursion = 0;
 		output_packet_len = 0;
 		return;
 	}
@@ -271,25 +269,17 @@ static int nc_getc(void)
 
 	input_recursion = 1;
 
-	net_timeout = 0;	/* no timeout*/
+	net_timeout = 0;	/* no timeout */
 	while (!input_size)
 		NetLoop(NETCONS);
 
-        // printf ( "\n input_buffer: %s \n", input_buffer+input_offset);
-        printf ( " ");
-       
-
-	c = input_buffer[input_offset++];
-
 	input_recursion = 0;
 
-        debug_cond(DEBUG_DEV_PKT, "input c: %s\"\n", c);
-        /* printf ( "input c: %c , input_offset: %i \n", c, input_offset); */
+	c = input_buffer[input_offset++];
 
 	if (input_offset >= sizeof(input_buffer))
 		input_offset -= sizeof(input_buffer);
 	input_size--;
-
 
 	return c;
 }
@@ -310,7 +300,7 @@ static int nc_tstc(void)
 
 	input_recursion = 1;
 
-	net_timeout = 50;  /* was 1 ms */
+	net_timeout = 1;
 	NetLoop(NETCONS);	/* kind of poll */
 
 	input_recursion = 0;
